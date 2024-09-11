@@ -15,4 +15,5 @@ add_executable(${ProjName}
 	src/hittable_list.h
 	src/utility.h
 	src/interval.h
+	src/camera.h
 )
