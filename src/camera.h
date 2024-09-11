@@ -8,7 +8,7 @@ class Camera
 public:
 	double aspect_ratio = 1.0;
 	int image_width = 100;
-
+	int samples_per_pixel = 10;
 
 	void render(Hittable& world)
 	{
@@ -29,14 +29,13 @@ public:
 			printf("\rScanlines remaining: %d\n", image_height - j);
 			for (int i = 0; i < image_width; ++i)
 			{
-				//color pixel_color = color(static_cast<double>(i) / image_width, static_cast<double>(j) / image_height, 0);
-
-				vec3 pixel_center = pixel100_loc + i * pixel_delta_u + j * pixel_delta_v;
-				vec3 ray_direction = pixel_center - center;
-				Ray ray(center, ray_direction);
-
-				color pixel_color = ray_color(ray, world);
-				write_color(pFile, pixel_color);
+				color pixel_color(0, 0, 0);
+				for (int sample = 0; sample < samples_per_pixel; ++sample)
+				{
+					Ray ray = get_ray(i, j);
+					pixel_color += ray_color(ray, world);
+				}
+				write_color(pFile, pixel_samples_scale*pixel_color);
 			}
 		}
 		
@@ -49,6 +48,7 @@ private:
 	point3 pixel100_loc;
 	vec3 pixel_delta_u;
 	vec3 pixel_delta_v;
+	double pixel_samples_scale;
 
 	void initialize()
 	{
@@ -70,6 +70,8 @@ private:
 		point3 viewport_upper_left = center - vec3(0, 0, focal_length) - viewport_u / 2 - viewport_v / 2;
 		pixel100_loc = viewport_upper_left + 0.5 * pixel_delta_u + 0.5 * pixel_delta_v;
 
+		pixel_samples_scale = 1.0 / samples_per_pixel;
+
 	}
 	color ray_color(Ray& ray, Hittable& world) const
 	{
@@ -83,6 +85,22 @@ private:
 		double a = 0.5 * (unit_direction.y() + 1.0);
 		color c = (1.0 - a) * color(1.0, 1.0, 1.0) + a * color(0.5, 0.7, 1.0);
 		return c;
+	}
+
+	Ray get_ray(int i, int j)
+	{
+		vec3 offset = sample_square();
+		point3 pixel_sample = pixel100_loc + (i + offset.x()) * pixel_delta_u + (j + offset.y()) * pixel_delta_v;
+
+		point3 ray_origin = center;
+		vec3 ray_direction = pixel_sample - ray_origin;
+
+		return Ray(ray_origin, ray_direction);
+	}
+
+	vec3 sample_square()
+	{
+		return vec3(random_double() - 0.5, random_double() - 0.5, 0);
 	}
 };
 
