@@ -42,7 +42,9 @@ inline void stop_timer()
     double duration = std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_start).count();
     int seconds = duration / 1000 / 1000;
     float miliseconds = (duration - seconds * 1000 * 1000) / 1000;
-    printf("elapsed time: %d:%f", seconds, miliseconds);
+    int minutes = seconds / 60;
+    seconds -= minutes * 60;
+    printf("elapsed time: %d:%d:%f", minutes ,seconds, miliseconds);
 }
 
 #include "color.h"
