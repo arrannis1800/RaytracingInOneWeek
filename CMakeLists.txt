@@ -16,4 +16,5 @@ add_executable(${ProjName}
 	src/utility.h
 	src/interval.h
 	src/camera.h
+	src/material.h
 )

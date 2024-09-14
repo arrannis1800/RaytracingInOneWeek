@@ -6,7 +6,7 @@
 class Ray
 {
 public:
-	Ray() = delete;
+	Ray() = default;
 
 	Ray(const point3& origin, const vec3& direction) : orig(origin), dir(direction) {}
 
