@@ -42,7 +42,7 @@ public:
 		}
 		
 		fclose(pFile);
-		printf("Render done");
+		printf("Render done\n");
 	}
 private:
 	int image_height;
