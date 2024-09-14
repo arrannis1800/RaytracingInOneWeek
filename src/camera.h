@@ -9,6 +9,7 @@ public:
 	double aspect_ratio = 1.0;
 	int image_width = 100;
 	int samples_per_pixel = 10;
+	int max_depth = 10;
 
 	void render(Hittable& world)
 	{
@@ -33,7 +34,7 @@ public:
 				for (int sample = 0; sample < samples_per_pixel; ++sample)
 				{
 					Ray ray = get_ray(i, j);
-					pixel_color += ray_color(ray, world);
+					pixel_color += ray_color(ray, max_depth, world);
 				}
 				write_color(pFile, pixel_samples_scale*pixel_color);
 			}
@@ -73,11 +74,15 @@ private:
 		pixel_samples_scale = 1.0 / samples_per_pixel;
 
 	}
-	color ray_color(Ray& ray, Hittable& world) const
+	color ray_color(Ray& ray, int depth, Hittable& world) const
 	{
+		if (depth <= 0)
+			return color(0, 0, 0);
+
 		HitRecord rec;
-		if (world.hit(ray, Interval(0, infinity), rec)) {
-			return 0.5 * (rec.normal + color(1, 1, 1));
+		if (world.hit(ray, Interval(0.001, infinity), rec)) {
+			vec3 direction = rec.normal + random_unit_vector();
+			return 0.5 * ray_color(Ray(rec.p, direction), --depth, world);
 		}
 
 
