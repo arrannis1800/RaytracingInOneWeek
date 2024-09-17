@@ -1,6 +1,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include "utility.h"
 #include "material.h"
 #include "hittable.h"
 
@@ -16,15 +17,7 @@ public:
 	{
 		initialize();
 
-		FILE* pFile = fopen("output.ppm", "w");
-
-		if (!pFile)
-		{
-			printf("ERROR: file wasn't opened");
-			return;
-		}
-
-		fprintf(pFile, "P3\n%d %d\n255\n", image_width, image_height);
+		configure_render_image(image_width, image_height);
 
 		for (int j = 0; j < image_height; ++j)
 		{
@@ -37,12 +30,12 @@ public:
 					Ray ray = get_ray(i, j);
 					pixel_color += ray_color(ray, max_depth, world);
 				}
-				write_color(pFile, pixel_samples_scale*pixel_color);
+				rendered_image[j * image_width + i] = pixel_samples_scale * pixel_color;
 			}
 		}
-		
-		fclose(pFile);
+
 		printf("Render done\n");
+		write_file(image_width, image_height);
 	}
 private:
 	int image_height;

@@ -7,6 +7,8 @@
 #include <limits>
 #include <memory>
 #include <chrono>
+#include <vector>
+
 
 const double infinity = std::numeric_limits<double>::infinity();
 const double pi = 3.1415926535897932385;
@@ -47,9 +49,40 @@ inline void stop_timer()
     printf("elapsed time: %d:%d:%f", minutes ,seconds, miliseconds);
 }
 
+
+
 #include "color.h"
 #include "ray.h"
 #include "vec3.h"
 #include "interval.h"
+
+std::vector<color> rendered_image;
+
+inline void configure_render_image(int width, int height)
+{
+    rendered_image.resize(width * height);
+}
+
+inline void write_file(int width, int height)
+{
+    printf("Start writing\n");
+    FILE* pFile = fopen("output.ppm", "w");
+
+    if (!pFile)
+    {
+        printf("ERROR: file wasn't opened");
+        return;
+    }
+
+    fprintf(pFile, "P3\n%d %d\n255\n", width, height);
+
+    for (auto& pixel : rendered_image)
+    {
+        write_color(pFile, pixel);
+    }
+
+    fclose(pFile);
+    printf("Writing done\n");
+}
 
 #endif // !UTILITY_H
