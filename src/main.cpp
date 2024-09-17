@@ -26,6 +26,10 @@ int main()
 	camera.image_width = 400;
 	camera.samples_per_pixel = 100;
 	camera.max_depth = 50;
+	camera.vfov = 20;
+	camera.lookfrom = point3(-2, 2, 1);
+	camera.lookat = point3(0, 0, -1);
+	camera.vup = vec3(0, 1, 0);
 
 	camera.render(world);
 	stop_timer();
