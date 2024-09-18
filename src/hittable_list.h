@@ -21,7 +21,7 @@ public:
 		objects.push_back(object);
 	}
 
-	virtual bool hit(Ray& ray, Interval ray_t, HitRecord& rec) const override
+	virtual bool hit(const Ray& ray, Interval ray_t, HitRecord& rec) const override
 	{
 		HitRecord temp_rec;
 		bool hit_anything = false;

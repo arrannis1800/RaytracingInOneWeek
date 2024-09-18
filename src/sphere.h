@@ -10,7 +10,7 @@ class Sphere : public Hittable
 public:
 	Sphere(const point3& center, double radius, std::shared_ptr<Material> mat) : center(center), radius(std::fmax(0, radius)), mat(mat) {}
 
-	virtual bool hit(Ray& ray, Interval ray_t, HitRecord& rec) const override
+	virtual bool hit(const Ray& ray, Interval ray_t, HitRecord& rec) const override
 	{
 		vec3 oc = center - ray.origin();
 		double a = ray.direction().length_squared();

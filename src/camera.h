@@ -80,7 +80,7 @@ private:
 		pixel_samples_scale = 1.0 / samples_per_pixel;
 
 	}
-	color ray_color(Ray& ray, int depth, Hittable& world) const
+	color ray_color(const Ray& ray, int depth, Hittable& world) const
 	{
 		if (depth <= 0)
 			return color(0, 0, 0);
