@@ -1,6 +1,9 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include <thread>
+#include <mutex>
+
 #include "utility.h"
 #include "material.h"
 #include "hittable.h"
@@ -23,23 +26,29 @@ public:
 
 	void render(Hittable& world)
 	{
+		printf("Render start\n");
 		initialize();
 
 		configure_render_image(image_width, image_height);
 
-		for (int j = 0; j < image_height; ++j)
+		std::vector<std::thread> threads;
+
+		int rows_per_thread = 4;
+		int remaining_rows = image_height % rows_per_thread;
+
+		printf("Generating chunks\n");
+		int row_start = 0;
+		for (int t = 0; t < image_height / rows_per_thread; ++t)
 		{
-			printf("\rScanlines remaining: %d\n", image_height - j);
-			for (int i = 0; i < image_width; ++i)
-			{
-				color pixel_color(0, 0, 0);
-				for (int sample = 0; sample < samples_per_pixel; ++sample)
-				{
-					Ray ray = get_ray(i, j);
-					pixel_color += ray_color(ray, max_depth, world);
-				}
-				rendered_image[j * image_width + i] = pixel_samples_scale * pixel_color;
-			}
+			int row_end = row_start + rows_per_thread + (t < remaining_rows ? 1 : 0);
+			threads.push_back(std::thread(&Camera::render_chunk, this, row_start, row_end, std::ref(world)));
+			row_start = row_end;
+		}
+		printf("All chunks were generated\n");
+
+		for (auto& t : threads)
+		{
+			t.join();
 		}
 
 		printf("Render done\n");
@@ -55,6 +64,9 @@ private:
 	vec3 u, v, w;
 	vec3 defocus_disk_u;
 	vec3 defocus_disk_v;
+
+	int rows_rendered = 0;
+	std::mutex m;
 
 	void initialize()
 	{
@@ -129,6 +141,27 @@ private:
 	{
 		vec3 p = random_in_unit_disk();
 		return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
+	}
+
+	void render_chunk(int row_start, int row_end, Hittable& world)
+	{
+		for (int j = row_start; j < row_end; ++j)
+		{
+			for (int i = 0; i < image_width; ++i)
+			{
+				color pixel_color(0, 0, 0);
+				for (int sample = 0; sample < samples_per_pixel; ++sample)
+				{
+					Ray ray = get_ray(i, j);
+					pixel_color += ray_color(ray, max_depth, world);
+				}
+				rendered_image[j * image_width + i] = pixel_samples_scale * pixel_color;
+			}
+			m.lock();
+			rows_rendered++;
+			printf("\rScanlines remaining: %d\n", image_height - rows_rendered);
+			m.unlock();
+		}
 	}
 };
 
