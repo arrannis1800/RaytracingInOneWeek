@@ -30,6 +30,8 @@ int main()
 	camera.lookfrom = point3(-2, 2, 1);
 	camera.lookat = point3(0, 0, -1);
 	camera.vup = vec3(0, 1, 0);
+	camera.defocus_angle = 10.0;
+	camera.focus_dist = 3.4;
 
 	camera.render(world);
 	stop_timer();

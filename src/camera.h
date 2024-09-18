@@ -18,6 +18,9 @@ public:
 	point3 lookat = point3(0, 0, -1);
 	vec3 vup = vec3(0, 1, 0);
 
+	double defocus_angle = 0;
+	double focus_dist = 10;
+
 	void render(Hittable& world)
 	{
 		initialize();
@@ -50,6 +53,8 @@ private:
 	vec3 pixel_delta_v;
 	double pixel_samples_scale;
 	vec3 u, v, w;
+	vec3 defocus_disk_u;
+	vec3 defocus_disk_v;
 
 	void initialize()
 	{
@@ -58,10 +63,9 @@ private:
 
 		center = lookfrom;
 
-		double focal_length = (lookfrom - lookat).length();
 		double theta = degrees_to_radians(vfov);
 		double h = std::tan(theta / 2);
-		double viewport_height = 2 * h * focal_length;
+		double viewport_height = 2 * h * focus_dist;
 		double viewport_width = viewport_height * (static_cast<double>(image_width) / image_height);
 
 		w = unit_vector(lookfrom - lookat);
@@ -74,8 +78,12 @@ private:
 		pixel_delta_u = viewport_u / image_width;
 		pixel_delta_v = viewport_v / image_height;
 
-		point3 viewport_upper_left = center - focal_length * w - viewport_u / 2 - viewport_v / 2;
+		point3 viewport_upper_left = center - focus_dist * w - viewport_u / 2 - viewport_v / 2;
 		pixel100_loc = viewport_upper_left + 0.5 * pixel_delta_u + 0.5 * pixel_delta_v;
+
+		double defocus_radius = focus_dist * std::tan(degrees_to_radians(defocus_angle / 2));
+		defocus_disk_u = u * defocus_radius;
+		defocus_disk_v = v * defocus_radius;
 
 		pixel_samples_scale = 1.0 / samples_per_pixel;
 
@@ -106,7 +114,7 @@ private:
 		vec3 offset = sample_square();
 		point3 pixel_sample = pixel100_loc + (i + offset.x()) * pixel_delta_u + (j + offset.y()) * pixel_delta_v;
 
-		point3 ray_origin = center;
+		point3 ray_origin = (defocus_angle <= 0) ? center : defocus_disk_sample();
 		vec3 ray_direction = pixel_sample - ray_origin;
 
 		return Ray(ray_origin, ray_direction);
@@ -115,6 +123,12 @@ private:
 	vec3 sample_square()
 	{
 		return vec3(random_double() - 0.5, random_double() - 0.5, 0);
+	}
+
+	point3 defocus_disk_sample() const
+	{
+		vec3 p = random_in_unit_disk();
+		return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
 	}
 };
 
