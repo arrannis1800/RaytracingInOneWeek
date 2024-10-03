@@ -30,21 +30,17 @@ public:
 		initialize();
 
 		configure_render_image(image_width, image_height);
-
+		printf("Image params: %dx%d\n", image_height, image_width);
 		std::vector<std::thread> threads;
 
-		int rows_per_thread = 4;
-		int remaining_rows = image_height % rows_per_thread;
-
-		printf("Generating chunks\n");
+		int num_threads = std::thread::hardware_concurrency();
+		printf("Generating workers\n");
 		int row_start = 0;
-		for (int t = 0; t < image_height / rows_per_thread; ++t)
+		for (int t = 0; t < num_threads; ++t)
 		{
-			int row_end = row_start + rows_per_thread + (t < remaining_rows ? 1 : 0);
-			threads.push_back(std::thread(&Camera::render_chunk, this, row_start, row_end, std::ref(world)));
-			row_start = row_end;
+			threads.push_back(std::thread(&Camera::render_worker, this, std::ref(world)));
 		}
-		printf("All chunks were generated\n");
+		printf("All workers were generated\n");
 
 		for (auto& t : threads)
 		{
@@ -143,24 +139,31 @@ private:
 		return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
 	}
 
-	void render_chunk(int row_start, int row_end, Hittable& world)
+	void render_worker(Hittable& world)
 	{
-		for (int j = row_start; j < row_end; ++j)
+		while (true)
 		{
+			int current_row = 0;
+			m.lock();
+			current_row = rows_rendered++;
+			m.unlock();
+
+			if (current_row >= image_height)
+			{
+				printf("\chunk is done\n");
+				return;
+			}
+			printf("\rScanline: %d\n", current_row);
 			for (int i = 0; i < image_width; ++i)
 			{
 				color pixel_color(0, 0, 0);
 				for (int sample = 0; sample < samples_per_pixel; ++sample)
 				{
-					Ray ray = get_ray(i, j);
+					Ray ray = get_ray(i, current_row);
 					pixel_color += ray_color(ray, max_depth, world);
 				}
-				rendered_image[j * image_width + i] = pixel_samples_scale * pixel_color;
+				rendered_image[current_row * image_width + i] = pixel_samples_scale * pixel_color;
 			}
-			m.lock();
-			rows_rendered++;
-			printf("\rScanlines remaining: %d\n", image_height - rows_rendered);
-			m.unlock();
 		}
 	}
 };
